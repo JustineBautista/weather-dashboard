@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weather Dashboard — Justine Bautista</title>
+  <meta name="description" content="A modern, real-time weather dashboard with hourly forecasts, air quality, and beautiful animated visuals.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body id="appBody" class="theme-clear">
+
+  <!-- Animated ambient background -->
+  <div class="ambient-orb ambient-orb-1"></div>
+  <div class="ambient-orb ambient-orb-2"></div>
+  <div class="ambient-orb ambient-orb-3"></div>
+
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-left">
+      <a href="../index.html" class="back-link" id="backLink">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        Portfolio
+      </a>
+      <div class="brand">Weather<span class="brand-accent">.</span></div>
+    </div>
+    <div class="search-wrapper" id="searchWrapper">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search for a city..." autocomplete="off" />
+      <div id="searchResults" class="search-results"></div>
+    </div>
+    <div class="header-actions">
+      <button class="action-btn geo-btn" id="geolocateBtn" title="Use my location">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/><circle cx="12" cy="12" r="10"/></svg>
+        <span class="geo-label">My Location</span>
+      </button>
+      <button class="action-btn unit-btn" id="unitToggle" title="Toggle temperature unit">°C</button>
+    </div>
+  </header>
+
+  <!-- Dashboard Layout -->
+  <main class="dashboard-main">
+    <!-- Primary Content -->
+    <div class="main-content">
+
+      <!-- Current Weather Hero -->
+      <section class="current-weather glass-panel" id="currentWeatherPanel">
+        <div class="current-left">
+          <div class="current-location" id="currentLocation">Loading…</div>
+          <div class="current-date" id="currentDate"></div>
+          <div class="current-temp-row">
+            <div class="current-temp" id="currentTemp">--°</div>
+            <div class="current-meta">
+              <div class="current-condition" id="currentCondition">--</div>
+              <div class="current-feels">Feels like <span id="feelsLike">--°</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="current-right">
+          <div class="weather-visual" id="weatherVisual">
+            <!-- Animated weather icon injected by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Atmospheric Stats -->
+      <section class="stats-grid">
+        <div class="stat-card glass-panel" id="statHumidity">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+          </div>
+          <div class="stat-label">Humidity</div>
+          <div class="stat-value" id="humidity">--%</div>
+          <div class="stat-bar"><div class="stat-bar-fill" id="humidityBar"></div></div>
+        </div>
+        <div class="stat-card glass-panel" id="statWind">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+          </div>
+          <div class="stat-label">Wind Speed</div>
+          <div class="stat-value" id="windSpeed">-- km/h</div>
+          <div class="stat-extra" id="windDir"></div>
+        </div>
+        <div class="stat-card glass-panel" id="statUV">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          </div>
+          <div class="stat-label">UV Index</div>
+          <div class="stat-value" id="uvIndex">--</div>
+          <div class="stat-extra" id="uvLabel"></div>
+        </div>
+        <div class="stat-card glass-panel" id="statAQI">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h10"/><path d="M9 4v16"/><path d="m3 9 3 3-3 3"/><circle cx="18" cy="12" r="4"/></svg>
+          </div>
+          <div class="stat-label">Air Quality</div>
+          <div class="stat-value" id="aqi">--</div>
+          <div class="stat-extra" id="aqiLabel"></div>
+        </div>
+        <div class="stat-card glass-panel" id="statPressure">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="m17 7-5 5-5-5"/><circle cx="12" cy="12" r="10"/></svg>
+          </div>
+          <div class="stat-label">Pressure</div>
+          <div class="stat-value" id="pressure">-- hPa</div>
+        </div>
+        <div class="stat-card glass-panel" id="statVisibility">
+          <div class="stat-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="stat-label">Visibility</div>
+          <div class="stat-value" id="visibility">-- km</div>
+        </div>
+      </section>
+
+      <!-- Hourly Chart -->
+      <section class="hourly-section glass-panel">
+        <div class="section-head">
+          <h3>Hourly Forecast</h3>
+          <span class="section-badge">Next 24h</span>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="hourlyChart"></canvas>
+        </div>
+      </section>
+
+      <!-- 7-Day Forecast -->
+      <section class="daily-section glass-panel">
+        <div class="section-head">
+          <h3>7-Day Forecast</h3>
+        </div>
+        <div id="dailyForecast" class="daily-list"></div>
+      </section>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <!-- Favorites -->
+      <div class="sidebar-panel glass-panel">
+        <div class="sidebar-head">
+          <h3>Favorites</h3>
+          <button class="add-fav-btn" id="addFavoriteBtn" title="Save current city">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          </button>
+        </div>
+        <div id="favoritesList" class="favorites-list">
+          <div class="fav-empty">No saved cities yet. Search for a city and click <strong>+</strong> to save it.</div>
+        </div>
+      </div>
+
+      <!-- Sun Cycle -->
+      <div class="sidebar-panel glass-panel sun-panel">
+        <h3>Sun Cycle</h3>
+        <div class="sun-arc-wrapper">
+          <svg class="sun-arc-svg" viewBox="0 0 200 110">
+            <path d="M 10 100 Q 100 -10 190 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" stroke-dasharray="4 4"/>
+            <circle id="sunDot" cx="100" cy="50" r="6" fill="#fbbf24"/>
+          </svg>
+          <div class="sun-horizon"></div>
+        </div>
+        <div class="sun-times">
+          <div class="sun-item">
+            <span class="sun-emoji">🌅</span>
+            <div>
+              <div class="sun-label">Sunrise</div>
+              <div class="sun-value" id="sunrise">--:--</div>
+            </div>
+          </div>
+          <div class="sun-item">
+            <span class="sun-emoji">🌇</span>
+            <div>
+              <div class="sun-label">Sunset</div>
+              <div class="sun-value" id="sunset">--:--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+    </aside>
+  </main>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Fetching weather data…</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
